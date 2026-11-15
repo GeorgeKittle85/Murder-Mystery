@@ -1,0 +1,176 @@
+<div id="app">
+  <canvas id="scene" aria-label="3D view of the Bay City Bruisers performance center"></canvas>
+
+  <div id="hud" hidden>
+    <div class="scorebug" id="scorebug" aria-live="polite">
+      <span class="sb-chip">SD</span>
+      <span class="sb-seg sb-case" id="sbCase">The Last Playbook</span>
+      <span class="sb-seg"><b id="sbClues">0</b><small>Evidence</small></span>
+      <span class="sb-seg" id="sbDownSeg"><b id="sbDown">1st</b><small>Down</small></span>
+      <span class="sb-seg"><b id="sbClock">00:00</b><small>Clock</small></span>
+    </div>
+    <div class="room-banner" id="roomBanner"></div>
+    <div class="map-wrap" id="mapWrap" title="Open the map"><canvas id="minimap" width="336" height="336"></canvas><span class="map-room" id="mapRoom"></span></div>
+    <div class="crosshair" id="crosshair"></div>
+    <div class="prompt" id="prompt" hidden><kbd id="promptKey">E</kbd><span id="promptText"></span></div>
+    <div class="toasts" id="toasts"></div>
+    <div class="hint-strip" id="hintStrip"><b>WASD</b> move · <b>Mouse</b> look · <b>E</b> inspect / talk · <b>F</b> block · <b>Shift</b> sprint · <b>Tab</b> playbook</div>
+    <div id="touchUI" hidden>
+      <div id="touchLayer"></div>
+      <div class="joy" id="joy"><div class="joy-knob" id="joyKnob"></div></div>
+      <span class="joy-ghost" id="joyGhost">Drag left side to move · right side to look</span>
+      <button id="tAct" class="t-btn t-act" hidden>Inspect</button>
+      <button id="tBlock" class="t-btn t-block">Block</button>
+    </div>
+    <div class="hud-actions">
+      <button id="btnNotebook" class="hud-btn">Playbook<kbd>Tab</kbd></button>
+      <button id="btnMenu" class="hud-btn">Menu<kbd>Esc</kbd></button>
+    </div>
+    <div class="resume-hint" id="resumeHint" hidden>Click to look around</div>
+    <div class="flash" id="flash"></div>
+  </div>
+
+  <section id="titleScreen" class="screen title" aria-labelledby="logoTitle">
+    <div class="title-inner">
+      <p class="eyebrow">Bay City Bruisers Performance Center · Championship Eve · 11:52 PM</p>
+      <h1 class="logo" id="logoTitle"><span>Sudden</span><span class="logo-death">Death</span></h1>
+      <p class="tagline">A 3D murder mystery. You are <b>Detective Eighty-Five</b>: former tight end, current truth-seeker. You block for the innocent and you catch the guilty.</p>
+      <div class="modes">
+        <button class="mode-card" id="btnStory">
+          <span class="mode-kicker">Story case · Hand-written</span>
+          <span class="mode-name">The Last Playbook</span>
+          <span class="mode-desc">The offensive coordinator is dead in the Film Room the night before the championship, and the playbook is gone. Find who, how and why.</span>
+          <span class="mode-meta">7 suspects · 20 pieces of evidence · about 20 min<span id="bestStory"></span></span>
+        </button>
+        <button class="mode-card" id="btnRandom">
+          <span class="mode-kicker">Random case · New every game</span>
+          <span class="mode-name">Overtime</span>
+          <span class="mode-desc">The team owner is found on the 50-yard line. The killer, weapon and room are reshuffled every snap. Find who, with what and where.</span>
+          <span class="mode-meta">8 suspects · 6 weapons · 9 rooms · about 15 min<span id="bestRandom"></span></span>
+        </button>
+      </div>
+      <div class="title-row">
+        <button class="chip-btn" id="btnHow">How to play</button>
+        <button class="chip-btn" id="btnSound">Sound: on</button>
+        <label class="chip-btn" for="sens"><span>Look speed</span><input type="range" id="sens" min="0.3" max="2.2" step="0.1" value="1"></label>
+        <span class="chip-btn" id="ballCount" hidden></span>
+      </div>
+      <p class="tip" id="titleTip"></p>
+    </div>
+    <div class="how" id="howPanel" hidden>
+      <div class="how-card" role="dialog" aria-labelledby="howTitle">
+        <h2 id="howTitle">How to play</h2>
+        <p>Walk the facility, inspect anything that sparkles, and talk to everyone still locked inside. Evidence and statements go into your Playbook. When you know the answer, open the Playbook and make the call.</p>
+        <h3>Four downs</h3>
+        <ul>
+          <li>Every wrong accusation burns a down. Miss on fourth down and it's a turnover: the killer walks.</li>
+          <li>Each accusation tells you how many parts you got right.</li>
+          <li>You get three timeouts per case. Each one buys a hint and costs a few rating points.</li>
+        </ul>
+        <h3>Detective work</h3>
+        <ul>
+          <li>Suspects with a gold <b>!</b> over their head have something new to tell you, usually because of evidence you found.</li>
+          <li>In Overtime, watch hands and shoes. Physical clues give you the killer's shoe size, dominant hand and badge class, and only one suspect fits all three.</li>
+          <li>Five golden footballs are hidden around the building. They don't solve anything. Find them anyway.</li>
+        </ul>
+        <h3>Controls</h3>
+        <div class="keys">
+          <kbd>WASD / Arrows</kbd><span>Move (arrows ← → also turn)</span>
+          <kbd>Mouse</kbd><span>Look around (click the view first)</span>
+          <kbd>E / Space</kbd><span>Inspect or talk</span>
+          <kbd>F</kbd><span>Block. It solves nothing. It feels incredible.</span>
+          <kbd>Shift</kbd><span>Sprint</span>
+          <kbd>Tab / J</kbd><span>Open the Playbook</span>
+          <kbd>M</kbd><span>Map</span>
+          <kbd>1–9</kbd><span>Pick a conversation topic</span>
+          <kbd>Touch</kbd><span>Drag the left side to move and the right side to look. Buttons for inspect and block.</span>
+        </div>
+        <div class="cf-actions"><button class="btn-primary" id="howClose">Let's go</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="briefScreen" class="screen brief" hidden>
+    <article class="case-file" aria-labelledby="briefTitle">
+      <header class="cf-head"><span class="cf-no" id="briefNo">CASE FILE 01</span><span class="cf-stamp">Confidential</span></header>
+      <h2 id="briefTitle">The Last Playbook</h2>
+      <div class="cf-body" id="briefBody"></div>
+      <div class="cf-controls" id="briefControls"></div>
+      <div class="cf-actions">
+        <button class="btn-primary" id="btnBegin">Start the investigation</button>
+        <button class="btn-ghost" id="btnBriefBack">Back</button>
+      </div>
+    </article>
+  </section>
+
+  <section id="inspectPanel" class="overlay center" hidden>
+    <article class="evidence-card" role="dialog" aria-labelledby="inspTitle">
+      <p class="ev-room" id="inspRoom"></p>
+      <h3 id="inspTitle"></h3>
+      <div class="ev-text" id="inspText"></div>
+      <div class="ev-logged" id="inspLogged" hidden><span class="ev-stamp">Evidence logged</span><span id="inspClueTitle"></span></div>
+      <p class="ev-quip" id="inspQuip"></p>
+      <button class="btn-paper" id="inspClose">Got it<kbd>E</kbd></button>
+    </article>
+  </section>
+
+  <section id="dialogPanel" class="overlay bottom" hidden>
+    <div class="dlg" role="dialog" aria-labelledby="dlgName">
+      <div class="dlg-head">
+        <div class="portrait" id="dlgPortrait"></div>
+        <div><h3 id="dlgName"></h3><p id="dlgRole"></p></div>
+        <button class="x" id="dlgClose">Leave<kbd>Esc</kbd></button>
+      </div>
+      <p class="dlg-text" id="dlgText"></p>
+      <p class="dlg-obs" id="dlgObs"></p>
+      <div class="dlg-topics" id="dlgTopics"></div>
+    </div>
+  </section>
+
+  <section id="notebook" class="overlay full" hidden>
+    <div class="nb" role="dialog" aria-label="The Playbook">
+      <header class="nb-head">
+        <h2>The Playbook</h2>
+        <nav class="nb-tabs" role="tablist" id="nbTabs">
+          <button role="tab" data-tab="case">Case</button>
+          <button role="tab" data-tab="evidence">Evidence</button>
+          <button role="tab" data-tab="suspects">Suspects</button>
+          <button role="tab" data-tab="map">Map</button>
+          <button role="tab" data-tab="call" class="tab-call">Make the call</button>
+        </nav>
+        <button class="x" id="nbClose">Close<kbd>Tab</kbd></button>
+      </header>
+      <div class="nb-body" id="nbBody"></div>
+    </div>
+  </section>
+
+  <section id="pauseMenu" class="overlay center" hidden>
+    <div class="pause" role="dialog" aria-labelledby="pauseTitle">
+      <h2 id="pauseTitle">Injury timeout</h2>
+      <button class="btn-primary" id="btnResume">Back on the field</button>
+      <button class="btn-ghost" id="btnPauseNotebook">Open the Playbook</button>
+      <button class="btn-ghost" id="btnPauseSound">Sound: on</button>
+      <label class="range-row" for="sens2"><span>Look speed</span><input type="range" id="sens2" min="0.3" max="2.2" step="0.1" value="1"></label>
+      <button class="btn-ghost" id="btnQuit">Quit to title</button>
+      <div class="controls-ref" id="pauseControls"></div>
+    </div>
+  </section>
+
+  <section id="resultScreen" class="screen result" hidden>
+    <div class="res">
+      <p class="res-kicker" id="resKicker">Case closed</p>
+      <h2 class="res-title" id="resTitle">Touchdown</h2>
+      <div class="rating"><span class="rating-num" id="resRating">0.0</span><span class="rating-lbl">Detective rating<b id="resTier">Pro Bowl</b></span></div>
+      <div class="res-stats" id="resStats"></div>
+      <div class="res-story" id="resStory"></div>
+      <div class="res-actions">
+        <button class="btn-primary" id="btnAgainRandom">New random case</button>
+        <button class="btn-ghost" id="btnAgainStory">Play the story case</button>
+        <button class="btn-ghost" id="btnToTitle">Title screen</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="loading">Warming up…</div>
+  <div id="bootError" hidden><p>The 3D engine didn't load, so the facility can't be built. Check your connection and reload the page.</p></div>
+</div>
